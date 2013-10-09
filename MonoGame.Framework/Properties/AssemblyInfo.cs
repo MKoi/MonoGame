@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Resources;
@@ -12,7 +13,11 @@ using System.Resources;
 #elif ANDROID
 [assembly: AssemblyDescription("MonoGame for Android")]
 #elif WINDOWS
+#if DIRECTX
+[assembly: AssemblyDescription("MonoGame for Windows Desktop (DirectX)")]
+#else
 [assembly: AssemblyDescription("MonoGame for Windows Desktop (OpenGL)")]
+#endif
 #elif PSM
 [assembly: AssemblyDescription("MonoGame for PlayStation Mobile")]
 #elif LINUX
@@ -33,6 +38,9 @@ using System.Resources;
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
+// Mark the assembly as CLS compliant so it can be safely used in other .NET languages
+[assembly:CLSCompliant(true)]
+
 // Setting ComVisible to false makes the types in this assembly not visible 
 // to COM components.  If you need to access a type in this assembly from 
 // COM, set the ComVisible attribute to true on that type.
@@ -51,6 +59,6 @@ using System.Resources;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("3.0.1.0")]
-[assembly: AssemblyFileVersion("3.0.1.0")]
+[assembly: AssemblyVersion("3.0.0.0")]
+[assembly: AssemblyFileVersion("3.0.0.0")]
 [assembly: NeutralResourcesLanguageAttribute("en-US")]

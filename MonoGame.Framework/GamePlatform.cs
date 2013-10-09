@@ -66,6 +66,7 @@ non-infringement.
 */
 #endregion License
 
+using Microsoft.Xna.Framework.Input;
 using System;
 
 #if WINRT
@@ -92,12 +93,14 @@ namespace Microsoft.Xna.Framework
             return new iOSGamePlatform(game);
 #elif MONOMAC
             return new MacGamePlatform(game);
-#elif WINDOWS || LINUX
+#elif (WINDOWS && OPENGL) || LINUX
             return new OpenTKGamePlatform(game);
 #elif ANDROID
             return new AndroidGamePlatform(game);
 #elif PSM
 			return new PSSGamePlatform(game);
+#elif WINDOWS && DIRECTX
+            return new MonoGame.Framework.WinFormsGamePlatform(game);
 #elif WINDOWS_PHONE
             return new MonoGame.Framework.WindowsPhone.WindowsPhoneGamePlatform(game);
 #elif WINRT
@@ -191,9 +194,19 @@ namespace Microsoft.Xna.Framework
 			get; protected set;
 		}
 #else
+        private GameWindow _window;
         public GameWindow Window
         {
-            get; protected set;
+            get { return _window; }
+
+
+            protected set
+            {
+                if (_window == null)
+                    Mouse.PrimaryWindow = value;
+
+                _window = value;
+            }
         }
 #endif
   

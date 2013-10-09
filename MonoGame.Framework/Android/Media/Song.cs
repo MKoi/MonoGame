@@ -15,7 +15,12 @@ namespace Microsoft.Xna.Framework.Media
         internal delegate void FinishedPlayingHandler(object sender, EventArgs args);
         event FinishedPlayingHandler DonePlaying;
 
-        internal Song(string fileName)
+		internal Song (string fileName, int durationMS)
+			:this(fileName)
+		{
+			_Duration = TimeSpan.FromMilliseconds(durationMS);
+		}
+		internal Song(string fileName)
         {
             _name = fileName;
             if (_androidPlayer == null)
@@ -56,7 +61,7 @@ namespace Microsoft.Xna.Framework.Media
                     _androidPlayer.Reset();
                     _androidPlayer.SetDataSource(afd.FileDescriptor, afd.StartOffset, afd.Length);
                     _androidPlayer.Prepare();
-                    _androidPlayer.Looping = true;
+                    _androidPlayer.Looping = MediaPlayer.IsRepeating;
                 }
             }
         }
@@ -192,16 +197,22 @@ namespace Microsoft.Xna.Framework.Media
         {
             get
             {
-                if (_androidPlayer != null)
-                {
-                    return new TimeSpan(0, 0, (int)_androidPlayer.Duration);
-                }
-                else
-                {
-                    return new TimeSpan(0);
-                }
+				if(_Duration == TimeSpan.Zero)
+				{
+	                if (_androidPlayer != null)
+	                {
+	                    return new TimeSpan(0, 0, (int)_androidPlayer.Duration);
+	                }
+	                else
+	                {
+						return _Duration;
+	                }
+				}
+				else
+					return _Duration;
             }
         }
+		private TimeSpan _Duration = TimeSpan.Zero;
 
         public TimeSpan Position
         {

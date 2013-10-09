@@ -5,12 +5,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+#if OPENGL
 #if MONOMAC
 using MonoMac.OpenGL;
 #elif WINDOWS || LINUX
 using OpenTK.Graphics.OpenGL;
 #elif GLES
 using OpenTK.Graphics.ES20;
+#endif
 #elif PSM
 using Sce.PlayStation.Core.Graphics;
 #endif
@@ -113,42 +115,44 @@ namespace Microsoft.Xna.Framework.Graphics
             // Force the uniform location to be looked up again
             _program = -1;
 #endif
+
+#if DIRECTX
+            SharpDX.Utilities.Dispose(ref _cbuffer);
+            _dirty = true;
+#endif
         }
 
         private void SetData(int offset, int rows, int columns, object data)
         {
-            // TODO: Should i pass the element size in?
+            // Shader registers are always 4 bytes and all the
+            // incoming data objects should be 4 bytes per element.
             const int elementSize = 4;
             const int rowSize = elementSize * 4;
 
-            // Take care of a single data type.
+            // Take care of a single element.
             if (rows == 1 && columns == 1)
             {
-                // TODO: Consider storing all data in arrays to avoid
-                // having to generate this temp array on every set.
-                byte[] bytes;
-
-                if (data is float)
-                    bytes = BitConverter.GetBytes((float)data);
-                else if (data is int)
-					// Integer values are treated as floats after the shader is converted, so we convert them.
-					bytes = BitConverter.GetBytes((float)((int)data));
-				else
-                    bytes = BitConverter.GetBytes(((float[])data)[0]);
-
-                Buffer.BlockCopy(bytes, 0, _buffer, offset, elementSize);
+                // EffectParameter stores all values in arrays by default.             
+                if (data is Array)
+                    Buffer.BlockCopy(data as Array, 0, _buffer, offset, elementSize);
+                else
+                {
+                    // TODO: When we eventually expose the internal Shader 
+                    // API then we will need to deal with non-array elements.
+                    throw new NotImplementedException();   
+                }
             }
 
             // Take care of the single copy case!
             else if (rows == 1 || (rows == 4 && columns == 4))
-                Buffer.BlockCopy(data as Array, 0, _buffer, offset, rows * columns * elementSize);
+                Buffer.BlockCopy(data as Array, 0, _buffer, offset, rows*columns*elementSize);
             else
             {
                 var source = data as Array;
 
-                var stride = (columns * elementSize);
+                var stride = (columns*elementSize);
                 for (var y = 0; y < rows; y++)
-                    Buffer.BlockCopy(source, stride * y, _buffer, offset + (rowSize * y), columns * elementSize);
+                    Buffer.BlockCopy(source, stride*y, _buffer, offset + (rowSize*y), columns*elementSize);
             }
         }
 
@@ -175,6 +179,7 @@ namespace Microsoft.Xna.Framework.Graphics
                 {
                     case EffectParameterType.Single:
 					case EffectParameterType.Int32:
+                    case EffectParameterType.Bool:
                         // HLSL assumes matrices are column-major, whereas in-memory we use row-major.
                         // TODO: HLSL can be told to use row-major. We should handle that too.
                         if (param.ParameterClass == EffectParameterClass.Matrix)
@@ -189,7 +194,7 @@ namespace Microsoft.Xna.Framework.Graphics
                         }
                         break;
                     default:
-                        throw new NotImplementedException("Not supported!");
+                        throw new NotSupportedException("Not supported!");
                 }
             }
 
@@ -233,6 +238,9 @@ namespace Microsoft.Xna.Framework.Graphics
 
         internal void Apply(GraphicsDevice device, ShaderStage stage, int slot)
         {
+            if (_cbuffer == null)
+                Initialize();
+
             // NOTE: We make the assumption here that the caller has
             // locked the d3dContext for us to use.
             var d3dContext = GraphicsDevice._d3dContext;

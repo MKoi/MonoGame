@@ -71,6 +71,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Remoting.Messaging;
+using System.Text;
 using System.Threading;
 
 using MonoTouch.Foundation;
@@ -243,7 +244,7 @@ namespace Microsoft.Xna.Framework.GamerServices
 			IsVisible = true;
 
 			keyboardViewController = new KeyboardInputViewController(
-				title, description, defaultText, usePasswordMode);
+				title, description, defaultText, usePasswordMode, _gameViewController);
 
 			_gameViewController.PresentModalViewController (keyboardViewController, true);
 
